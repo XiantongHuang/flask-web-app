@@ -7,10 +7,10 @@ __author__ = 'xthuang'
 
 
 from flask import Flask
-app = Flask(__name__)
+app = Flask(__name__)#创建程序实例
 
 
-@app.route('/')
+@app.route('/')#注册视图函数 根目录
 def index():
     return '<h1>Hello World!</h1>'
 
