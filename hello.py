@@ -8,10 +8,13 @@ __author__ = 'xthuang'
 
 from flask import Flask, render_template
 from flask_script import Manager#输出一个Manager类，使支持命令行选项。
-
+from flask_bootstrap import Bootstrap#初始化后可以在程序中使用一个包含所有BOOTstrap文件的基模板
 
 app = Flask(__name__)#创建程序实例
-manager = Manager(app)#把程序实例作为参数传给构造函数，初始化主类的实例。
+#把程序实例作为参数传给构造函数，初始化主类的实例。
+manager = Manager(app)
+bootstrap = Bootstrap(app)
+
 
 @app.route('/')#注册视图函数 根目录
 def index():
