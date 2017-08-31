@@ -1,60 +1,9 @@
-<!--Jinjia2模板:使用Bootstrap的模板,基模板提供了一个网页框架，引入了Bootstrap中的所有CSS和JavaScript文件-->
-<!--此模板定义了三个模块：title 中的内容会出现在渲染后的HTML文档，放在<title>标签中；navbar和content分别表示导航条和主题内容-->
-<!--本模板中用到的html介绍
+<!--使用模板继承机制，创建基模板，简化页面模板-->
 
-    大多数html元素被定义为块级元素（block level element）和内联元素（inline element），块级元素在浏览器显示时，通常会以新行来开始（和结束），内联元素在显示时通常不会以新行开始。
-    <div> 元素是块级元素，它是可用于组合其他 HTML 元素的容器。<div> 元素没有特定的含义。除此之外，由于它属于块级元素，浏览器会在其前后显示折行，如果与 CSS 一同使用，<div> 元素可用于对大的内容块设置样式属性。
-    <span> 元素是内联元素，可用作文本的容器。<span> 元素也没有特定的含义。当与 CSS 一同使用时，<span> 元素可用于为部分文本设置样式属性。
+{% extends "base.html" %}
 
-    <a>定义超文本链接，链接地址由属性‘href’指定（属性在开始标签中指定）
-    <h1>to<h6> 定义HTML标题
-    <button> 定义一个点击按钮
-    <ul> 定义无序列表
-    <li> 定义列表的项目
-
-    class属性：为html元素定义一个或多个类名（classname）(类名从样式文件引入)
-    role 属性：是告诉Accessibility类应用（比如屏幕朗读程序，为盲人提供的访问网络的便利程序），这个元素所扮演的角色，主要是供残疾人使用。使用role可以增强文本的可读性和语义化    
-    type 属性：很多标签都有其属性，用type属性来规定。本利中button标签有三种属性      button该按钮是可点击的按钮（Internet Explorer 的默认值；
-     submit 该按钮是提交按钮（除了 Internet Explorer，该值是其他浏览器的默认值）     reset  该按钮是重置按钮（清除表单数据)
--->
-
-<!--bootstrap相关
-    
-    折叠（collapse）插件：可以很容易地让页面区域折叠起来。
-        使用：通过data属性：向元素添加 data-toggle="collapse" 和 data-target，自动分配可折叠元素的控制。data-target 属性接受一个 CSS 选择器，并会对其应用折叠效果。
--->
-
-<!-- 从Flask-Bootstrap中导入bootstrap/base.html，实现模板继承-->
-{% extends "bootstrap/base.html" %}
-
-{% block title %}Flasky{% endblock %}
-
-{% block navbar %}
-<div class="navbar navbar-inverse" role="navigation">
-    <div class="container">
-        <div class="navbar-head">
-            <button type="button" class="navbar-toggle"
-            data-toggle="collapse" data=".navbar-collapse">
-                <span class="sr-only">Toggle navigation</span>
-                <span class="icon-bar"></span>
-                <span class="icon-bar"></span>
-                <span class="icon-bar"></span>
-            </button>
-            <a class="navbar-brand" href="/">Flasky</a>
-        </div>
-        <div class="navbar-collapse collapse">
-            <ul class="nav navbar-nav">
-                <li><a href="/">Home</a></li>
-            </ul>
-        </div>
-    </div>
-</div>
-{% endblock %}
-
-{% block content %}
-<div class="container">
-    <div class="page-header">
-        <h1>hello {{ name|capitalize }}!</h1>
-    </div>
+{% block page_content %}
+<div class="page-header">
+    <h1>hello, {{ name|capitalize }}</h1>
 </div>
 {% endblock %}

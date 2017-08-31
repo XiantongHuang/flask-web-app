@@ -15,8 +15,17 @@ app = Flask(__name__)#创建程序实例
 manager = Manager(app)
 bootstrap = Bootstrap(app)
 
+#像常规路由一样，定义基于模板的自定义错误界面
+@app.errorhandler(404)
+def page_not_found(e):
+    return render_template('404.html'), 404
 
-@app.route('/')#注册视图函数 根目录
+@app.errorhandler(500)
+def internal_server_error(e):
+    return render_template('500.html'), 500
+
+#注册视图函数
+@app.route('/')
 def index():
     return render_template('index.html')
     #render_templates函数把jinjia2模板集成到程序中，第一个参数是模板的文件名随后     的参数都是键值对（默认在templates文件夹中寻找模板）

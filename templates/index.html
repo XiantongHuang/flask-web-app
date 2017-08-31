@@ -1,2 +1,9 @@
-<!--jinjia2模板-->
-<h1>hello world!</h1>
+<!--使用基模板简化-->
+
+{% extends "base.html" %}
+
+{% block page_content %}
+<div class="page-header">
+    <h1>hello world!</h1>
+</div>
+{% endblock %}
