@@ -1,7 +1,9 @@
 <!--jinja2模板:使用Bootstrap的模板,基模板提供了一个网页框架，引入了Bootstrap中>的所有CSS和JavaScript文件-->
 
 <!--包含导航条程序的基模板-->
-<!--v2.3:使用静态文件定义收藏夹图标；添加时间显示，使用Flask-Moment本地化日期和时间。-->
+<!--v2.3:使用静态文件定义收藏夹图标；添加时间显示，使用Flask-Moment本地化日期和时间。
+    v4.0:渲染flash消息
+-->
 
 <!-- 从Flask-Bootstrap中导入bootstrap/base.html，实现模板继承-->
 {% extends "bootstrap/base.html" %}
@@ -38,6 +40,13 @@
 
 {% block content %}
 <div class="container">
+    {% for message in get_flashed_messages() %}<!--使用了循环，因为在之前的请求循环中每次调用flash()函数都会生成一个消息，所以可能有很多歌消息在排队等待显示。get_flashed_messages()函数获取的消息在下次调用时不会再次返回，因此Flash消息只显示一次，然后就消失了-->
+    <div class="alert alert-warning"><!--使用Bootstrap提供的警报CSS样式渲染警告消息-->
+        <button type="button" class="close" data-dismiss="alert">&times;</button><!--&times;,字符实体，乘号-->
+        {{ message }}
+    </div>
+    {% endfor %}
+
     {% block page_content %}{% endblock %}
 </div>
 {% endblock %}
