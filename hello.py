@@ -18,19 +18,58 @@ from datetime import datetime
 from flask_wtf import Form
 from wtforms import StringField, SubmitField
 from wtforms.validators import Required
+#导入sqlalchemy，使用数据库抽象层/ORM
+from flask_sqlalchemy import SQLAlchemy
+
+basedir = os.path.abspath(os.path.dirname(__file__))#先获取当前目录，再获取当前目录的绝对地址
 
 app = Flask(__name__)#创建程序实例
-app.config['SECRET_KEY'] = 'SECRET STRING'#设置通用秘钥；Flask-WTF使用这个秘钥生成加密令牌，再用令牌验证请求中表单数据的真伪，防止跨站请求伪造的攻击
+
+#app.config字典可用来存储框架、扩展和程序本身的配置变量
+#设置通用秘钥；Flask-WTF使用这个秘钥生成加密令牌，再用令牌验证请求中表单数据的真伪，防止跨站请求伪造的攻击
+app.config['SECRET_KEY'] = 'SECRET STRING'
+#程序使用的数据哭URL必须保存到这个键中
+app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///' + os.path.join(basedir, 'data.sqlite')
+#设为True 每次请求结束后都会自动提交数据库中的变动
+app.config['SQLALCHEMY_COMMIT_ON_TEARDOWN'] = True 
 
 #把程序实例作为参数传给构造函数，初始化主类的实例。
 manager = Manager(app)
 bootstrap = Bootstrap(app)
 moment = Moment(app)
+db = SQLAlchemy(app)#db表示程序使用的数据库，同时获取了Flask-SQLAlchemy提供的所有功能
+
 
 #web表单，包含一个文本字段和提交按钮；表单中的字段都定义为类变量，类变量值是相应字段类型的对象
 class NameForm(Form):
     name = StringField('What is your name?', validators=[Required()])
     submit = SubmitField('Submit')
+
+
+#定义Role和User模型,从db.Model类继承
+class Role(db.Model):
+    __tablename__ = 'roles'
+    #定义类变量，其为该模型的属性，被定义为db.Column类的实例
+    id = db.Column(db.Interger, primary_key=True)
+    name = db.Column(db.String(64), unique=True)
+    #users属性代表这个关系的面向对象视角;'User'表明关系的另一端是哪个模型；backref参数向User中添加一个role属性，从而定义反向关系。这一属性可以代替role_id访问Role模型，此时获得的是模型对象，而不是外键的值。
+    users = db.relationship('User', backref='role')
+
+    def __repr__(self):
+        return '<Role> %r>' % self.name
+
+
+class User(db.Model):
+    __tablename__ = 'users'
+    id = db.Column(db.Interger, primary_key=True)
+    name = db.Column(db.String(64), unique=True, index=True)
+    #定义外键，建立起关系；roles 表名
+    role_id = db.Column(db.Interger, db.ForeignKey('roles.id')
+
+    def __repr__(self):
+        return '<User %r>' % self.name
+
+
 #像常规路由一样，定义基于模板的自定义错误界面
 @app.errorhandler(404)
 def page_not_found(e):
