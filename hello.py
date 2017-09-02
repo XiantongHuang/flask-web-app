@@ -32,6 +32,7 @@ app.config['SECRET_KEY'] = 'SECRET STRING'
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///' + os.path.join(basedir, 'data.sqlite')
 #设为True 每次请求结束后都会自动提交数据库中的变动
 app.config['SQLALCHEMY_COMMIT_ON_TEARDOWN'] = True 
+app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 #把程序实例作为参数传给构造函数，初始化主类的实例。
 manager = Manager(app)
@@ -53,7 +54,7 @@ class Role(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(64), unique=True)
     #users属性代表这个关系的面向对象视角;'User'表明关系的另一端是哪个模型；backref参数向User中添加一个role属性，从而定义反向关系。这一属性可以代替role_id访问Role模型，此时获得的是模型对象，而不是外键的值。
-    users = db.relationship('User', backref='role')
+    users = db.relationship('User', backref='role', lazy='dynamic')#lazy='dynamic'参数，禁止自动执行查询
 
     def __repr__(self):
         return '<Role %r>' % self.name
@@ -85,13 +86,18 @@ def internal_server_error(e):
 def index():
     form = NameForm()
     if form.validate_on_submit():
-        old_name = session.get('name')
-        if old_name is not None and old_name != form.name.data:
-            flash('Looks like you have changed your name!')
+        user = User.query.filter_by(username=form.name.data).first()
+        if user is None:
+            user = User(username=form.name.data)
+            db.session.add(user)
+            session['known'] = False
+        else:
+            session['known'] = True
         session['name'] = form.name.data
+        form.name.data =''
         return redirect(url_for('index'))#表单验证成功后执行重定向，跳出index()函数；浏览器收到这种响应，回想重定向的URL发起GET请求，这时表单验证是无法通过的，if 内语句不执行，执行下一条return，利用回话中保存的数据，渲染模板。
-    return render_template('index.html', current_time=datetime.utcnow(), form=form, name=session.get('name'))#current_time变量获取当前utc时间
+    return render_template('index.html', current_time=datetime.utcnow(), form=form, name=session.get('name'), known=session.get('known', False))#current_time变量获取当前utc时间
     #render_templates函数把jinjia2模板集成到程序中，第一个参数是模板的文件名随后的参数都是键值对（默认在templates文件夹中寻找模板）
-
+ 
 if __name__ == '__main__':
     manager.run()
