@@ -3,14 +3,13 @@
 
 '''
 a little flasky web app
-v4.1 重定向和Flash消息,删除视图函数user()
 '''
 
 __author__ = 'xthuang'
 
 import os
 from flask import Flask, render_template, session, redirect, url_for, flash
-from flask_script import Manager#输出一个Manager类，使支持命令行选项。
+from flask_script import Manager, Shell#输出一个Manager类，使支持命令行选项;集成Python shell，避免每次启动shell回话都要导入数据库实例和模型
 from flask_bootstrap import Bootstrap#初始化后可以在程序中使用一个包含所有BOOTstrap文件的基模板
 from flask_moment import Moment
 from datetime import datetime
@@ -20,6 +19,8 @@ from wtforms import StringField, SubmitField
 from wtforms.validators import Required
 #导入sqlalchemy，使用数据库抽象层/ORM
 from flask_sqlalchemy import SQLAlchemy
+#使用Flask-Migrate实现数据库迁移
+from flask_migrate import Migrate, MigrateCommand
 
 basedir = os.path.abspath(os.path.dirname(__file__))#先获取当前目录，再获取当前目录的绝对地址
 
@@ -39,7 +40,7 @@ manager = Manager(app)
 bootstrap = Bootstrap(app)
 moment = Moment(app)
 db = SQLAlchemy(app)#db表示程序使用的数据库，同时获取了Flask-SQLAlchemy提供的所有功能
-
+migrate = Migrate(app, db)
 
 #web表单，包含一个文本字段和提交按钮；表单中的字段都定义为类变量，类变量值是相应字段类型的对象
 class NameForm(Form):
@@ -70,6 +71,12 @@ class User(db.Model):
     def __repr__(self):
         return '<User %r>' % self.username
 
+
+#为shell命令添加一个上下文
+def make_shell_context():
+    return dict(app=app, db=db, User=User, Role=Role)#注册程序，数据库实例及模型
+manager.add_command('shell', Shell(make_context=make_shell_context))
+manager.add_command('db', MigrateCommand)#导出数据库迁移命令，使用db命令附加
 
 #像常规路由一样，定义基于模板的自定义错误界面
 @app.errorhandler(404)
