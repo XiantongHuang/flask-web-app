@@ -21,6 +21,8 @@ from wtforms.validators import Required
 from flask_sqlalchemy import SQLAlchemy
 #使用Flask-Migrate实现数据库迁移
 from flask_migrate import Migrate, MigrateCommand
+#电子邮件支持
+from flask_mail import Mail, Message
 
 basedir = os.path.abspath(os.path.dirname(__file__))#先获取当前目录，再获取当前目录的绝对地址
 
@@ -34,6 +36,15 @@ app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///' + os.path.join(basedir, 'da
 #设为True 每次请求结束后都会自动提交数据库中的变动
 app.config['SQLALCHEMY_COMMIT_ON_TEARDOWN'] = True 
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+#配置Flask-Mail使用qq邮箱发送邮件
+app.config['MAIL_SERVER'] = 'smtp.qq.com'
+app.config['MAIL_PORT'] = 465
+app.config['MAIL_USE_SSL'] = True
+app.config['MAIL_USERNAME'] = os.environ.get('MAIL_USERNAME')
+app.config['MAIL_PASSWORD'] = os.environ.get('MAIL_PASSWORD')
+app.config['FLASKY_MAIL_SUBJECT_PREFIX'] = ['Flasky']
+app.config['FLASKY_MAIL_SENDER'] = 'xt_huang@qq.com'
+app.config['FLASKY_ADMIN'] = os.environ.get('FLASKY_ADMIN')#接受邮件的邮箱地址
 
 #把程序实例作为参数传给构造函数，初始化主类的实例。
 manager = Manager(app)
@@ -41,6 +52,7 @@ bootstrap = Bootstrap(app)
 moment = Moment(app)
 db = SQLAlchemy(app)#db表示程序使用的数据库，同时获取了Flask-SQLAlchemy提供的所有功能
 migrate = Migrate(app, db)
+mail = Mail(app)
 
 #web表单，包含一个文本字段和提交按钮；表单中的字段都定义为类变量，类变量值是相应字段类型的对象
 class NameForm(Form):
@@ -75,8 +87,16 @@ class User(db.Model):
 #为shell命令添加一个上下文
 def make_shell_context():
     return dict(app=app, db=db, User=User, Role=Role)#注册程序，数据库实例及模型
+
 manager.add_command('shell', Shell(make_context=make_shell_context))
 manager.add_command('db', MigrateCommand)#导出数据库迁移命令，使用db命令附加
+
+#发送电子邮件功能
+def send_email(to, subject, template, **kw):
+    msg = Message(subject, sender=app.config['FLASKY_MAIL_SENDER'], recipients=[to])
+    msg.body = render_template(template + '.txt', **kw)
+    msg.html = render_template(template + '.html', **kw)
+    mail.send(msg) 
 
 #像常规路由一样，定义基于模板的自定义错误界面
 @app.errorhandler(404)
@@ -88,7 +108,6 @@ def internal_server_error(e):
     return render_template('500.html'), 500
 
 #注册视图函数
-#index函数不仅要渲染表单，还要接收表单中的数据 v4.0;重定向和用户会话 v4.1
 @app.route('/', methods=['GET', 'POST'])#将表单提交作为POST请求进行处理
 def index():
     form = NameForm()
@@ -98,6 +117,8 @@ def index():
             user = User(username=form.name.data)
             db.session.add(user)
             session['known'] = False
+            if app.config['FLASKY_ADMIN']:
+                send_email(app.config['FLASKY_ADMIN'], 'New User', 'mail/new_user', user=user)
         else:
             session['known'] = True
         session['name'] = form.name.data
